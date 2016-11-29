@@ -1,16 +1,24 @@
 package me.maxihuhe04.Gravestones;
 
 
+import me.maxihuhe04.Gravestones.util.OldBlock;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +34,14 @@ public class GravestoneHandler implements Listener {
             this.player = player;
             this.graveBlock = graveBlock;
             this.graveBlocks = graveBlocks;
-            this.oldBlocks = oldBlocks;
+
+            oldBlocks.forEach(b -> this.oldBlocks.add(new OldBlock(b)));
         }
 
         Inventory playerInventory;
         Player player;
         Block graveBlock;
-        List<Block> oldBlocks;
+        List<OldBlock> oldBlocks;
         List<Block> graveBlocks;
 
         /**
@@ -40,17 +49,20 @@ public class GravestoneHandler implements Listener {
          */
         @Override
         public void remove() {
+            oldBlocks.forEach(OldBlock::place);
 
-            for(Block b : oldBlocks) {
-                Block b1 = b.getLocation().getBlock();
-
-                //FIXME Block replacenpl
+            for(ItemStack item : playerInventory.getContents()) {
+                if(item != null) {
+                    Item drop = player.getWorld().dropItemNaturally(player.getLocation(), item);
+                    drop.setVelocity(drop.getVelocity().zero());
+                }
             }
 
-
-
-
             gravestones.remove(this);
+
+            if(player.isOnline()) {
+                player.sendMessage("§cDein Grab wurde zerstört.");
+            }
         }
 
         /**
@@ -80,26 +92,23 @@ public class GravestoneHandler implements Listener {
             return graveBlocks;
         }
 
-        public List<Block> getOldBlocks() {
+        public List<OldBlock> getOldBlocks() {
             return oldBlocks;
         }
 
-
-
-        @Override
-        public String toString() {
-            return "Gravestone{" +
-                    "playerInventory=" + playerInventory +
-                    ", player=" + player +
-                    ", graveBlock=" + graveBlock +
-                    ", oldBlocks=" + oldBlocks +
-                    ", graveBlocks=" + graveBlocks +
-                    '}';
+        public void open(Player p) {
+            if(p.getName().equalsIgnoreCase(player.getName()) || p.hasPermission("gravestones.openEveryGrave")) {
+                p.openInventory(playerInventory);
+            } else {
+                p.sendMessage("§cDieses Grab gehört nicht dir!");
+            }
         }
 
     }
 
 
+    //Listeners
+    @EventHandler
     public void onDeath(PlayerDeathEvent deathEvent) {
         if(deathEvent.getEntityType().equals(EntityType.PLAYER)) {
             Player p = deathEvent.getEntity();
@@ -120,14 +129,20 @@ public class GravestoneHandler implements Listener {
                     graveSize = 36;
                 } else if (invSize < 45) {
                     graveSize = 45;
-                } else if (invSize < 64) {
-                    graveSize = 64;
+                } else if (invSize < 54) {
+                    graveSize = 54;
                 }
+
 
                 Inventory playerInv = Bukkit.createInventory(null, graveSize, p.getDisplayName());
 
                 playerInv.addItem(p.getInventory().getContents());
                 playerInv.addItem(p.getInventory().getArmorContents());
+
+                ItemStack skull = new ItemStack(Material.SKULL_ITEM);
+                SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
+                skullMeta.setOwner(p.getName());
+                playerInv.setItem(playerInv.getSize(), skull);
 
 
                 List<Block> oldBlocks = new ArrayList<>();
@@ -135,9 +150,8 @@ public class GravestoneHandler implements Listener {
 
 
 
-                /**
-                 * Build the Grave
-                 */
+
+                //Build the Grave
 
                 final Location loc = p.getLocation();
 
@@ -182,6 +196,34 @@ public class GravestoneHandler implements Listener {
             }
         }
     }
+
+    @EventHandler
+    public void onBreakBlock(BlockBreakEvent e) {
+        gravestones.forEach(gravestone -> gravestone.getGraveBlocks().stream().filter(b -> b.getLocation().equals(e.getBlock().getLocation())).forEach(block -> {
+            e.setCancelled(true);
+            if (e.getPlayer().getName().equalsIgnoreCase(gravestone.getPlayer().getName()) || e.getPlayer().hasPermission("gravestones.destroyEveryGrave")) {
+                if (gravestone.getPlayer().isOnline()) {
+                    gravestone.remove();
+                    gravestone.getPlayer().sendMessage("§cDein Grab wurde zerstört.");
+                }
+            } else {
+                e.getPlayer().sendMessage("§cDieses Grab gehört nicht dir!");
+            }
+        }));
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent e) {
+        if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+            gravestones.forEach(gravestone -> {
+                if(e.getClickedBlock().equals(gravestone.getGraveBlock())) {
+                    gravestone.open(e.getPlayer());
+                }
+            });
+        }
+    }
+
+
 
 
 }

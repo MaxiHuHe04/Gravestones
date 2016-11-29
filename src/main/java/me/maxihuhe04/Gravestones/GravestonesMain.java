@@ -4,14 +4,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class GravestonesMain extends JavaPlugin {
 
+    private GravestoneHandler gravestoneHandler = new GravestoneHandler();
+
     @Override
     public void onEnable() {
         // Plugin startup logic
-        this.getServer().getPluginManager().registerEvents(new GravestoneHandler(), this);
+        this.getServer().getPluginManager().registerEvents(gravestoneHandler, this);
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        gravestoneHandler.gravestones.forEach(Gravestone::remove);
     }
 }
