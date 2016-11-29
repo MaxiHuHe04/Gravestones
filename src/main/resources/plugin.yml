@@ -1,0 +1,4 @@
+name: Gravestones
+version: ${project.version}
+main: me.maxihuhe04.Gravestones.GravestonesMain
+description: Gravestones.
