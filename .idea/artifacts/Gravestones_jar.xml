@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Gravestones:jar">
+    <output-path>$USER_HOME$/Desktop/Testserver/plugins</output-path>
+    <root id="archive" name="Gravestones.jar">
+      <element id="module-output" name="Gravestones" />
+    </root>
+  </artifact>
+</component>
