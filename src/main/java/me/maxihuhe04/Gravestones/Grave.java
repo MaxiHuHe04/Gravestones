@@ -17,6 +17,7 @@ import org.bukkit.material.MaterialData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
 /**
  * The Grave Class
@@ -114,10 +115,26 @@ public class Grave {
         List<Block> newBlocks = new ArrayList<>();
 
 
+        final boolean[] occupied = {false};
+        ArrayList<Location> locations = new ArrayList<>();
+        locations.add(p.getLocation().clone().add(-1, 0, 0));
+        locations.add(p.getLocation().clone().add(-1, -1, 0));
+        locations.add(p.getLocation().clone().add(-1, -1, 0).add(-1, 0, 0));
+        locations.add(p.getLocation().clone().add(-1, 0, -1));
+        locations.add(p.getLocation().clone().add(-1, 0, -1).add(0, 0, 2));
+        locations.add(p.getLocation().clone().add(-1,-1,0).add(0, -1, 0));
+        locations.add(p.getLocation().clone().add(-1,-1,0).add(-1,0,0).add(0, -1, 0));
+        locations.add(p.getLocation().clone().add(0, -1, 0));
+        locations.forEach(blockLoc -> gravestones.forEach(grave -> grave.getGraveLocs().stream().filter(location -> locEqual(location, blockLoc)).forEach(location -> occupied[0] = true)));
+
+
+        boolean x = new Random().nextBoolean();
+        boolean z = new Random().nextBoolean();
+        int y = new Random().nextInt(2);
+        final Location loc = occupied[0] ?p.getLocation().add(x?2:-2,3+y,z?-2:2):p.getLocation();
+
+
         //Build the Grave
-        final Location loc = p.getLocation();
-
-
         Location signLoc = loc.clone().add(-1, 0, 0);
         Location gravelLoc = loc.clone().add(-1, -1, 0);
         Location gravelLoc2 = loc.clone().add(-1, -1, 0).add(-1, 0, 0);
@@ -307,6 +324,15 @@ public class Grave {
      */
     public List<OldBlock> getOldBlocks() {
         return oldBlocks;
+    }
+
+    /**
+     * @param location First Location
+     * @param anotherLocation Second Location
+     * @return True if both Locations are equal
+     */
+    private static boolean locEqual(Location location, Location anotherLocation) {
+        return !(location == null || anotherLocation == null) && location.getBlockX() == anotherLocation.getBlockX() && location.getBlockY() == anotherLocation.getBlockY() && location.getBlockZ() == anotherLocation.getBlockZ();
     }
 
 
