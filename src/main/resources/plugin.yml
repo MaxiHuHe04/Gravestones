@@ -1,4 +1,13 @@
 name: Gravestones
 version: ${project.version}
+author: MaxiHuHe04
 main: me.maxihuhe04.Gravestones.GravestonesMain
 description: Gravestones.
+
+permissions:
+  gravestones.destroyEveryGrave:
+    description: With this permission, you can destroy every grave
+    default: op
+  gravestones.openEveryGrave:
+    description: With this permission, you can open every grave
+    default: op
