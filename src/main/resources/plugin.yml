@@ -4,10 +4,20 @@ author: MaxiHuHe04
 main: me.maxihuhe04.Gravestones.GravestonesMain
 description: Gravestones.
 
+commands:
+  graves:
+    description: List your/all graves
+    aliases: [gravestones]
+    usage: /graves [all]
+    permission: gravestones.listAllGraves
+
 permissions:
   gravestones.destroyEveryGrave:
     description: With this permission, you can destroy every grave
     default: op
   gravestones.openEveryGrave:
     description: With this permission, you can open every grave
+    default: op
+  gravestones.listAllGraves:
+    description: Permission for /graves
     default: op

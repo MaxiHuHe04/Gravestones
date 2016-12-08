@@ -4,6 +4,10 @@ package me.maxihuhe04.Gravestones;
 import com.sun.istack.internal.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,10 +19,12 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+
 import static me.maxihuhe04.Gravestones.Grave.gravestones;
 
 @SuppressWarnings("unused")
-public class GravestoneHandler implements Listener {
+public class GravestoneHandler implements Listener, CommandExecutor {
 
     //Listeners
     /**
@@ -161,12 +167,69 @@ public class GravestoneHandler implements Listener {
     }
 
     /**
+     * Command: /graves [all]
+     */
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        final String[] gravesMSG = new String[1];
+
+        if((args.length < 1 || (args.length > 0 && !args[0].equalsIgnoreCase("all"))) && sender instanceof Player) {
+            ArrayList<Grave> graves = new ArrayList<>();
+            Grave.gravestones.stream().filter(grave -> grave.getPlayer().getName().equalsIgnoreCase(sender.getName())).forEach(graves::add);
+
+            gravesMSG[0] = "§6Deine Gräber:\n";
+
+            final int[] index = {1};
+
+            graves.forEach(grave -> {
+                Location loc = grave.getGraveBlock().getLocation();
+                int x = loc.getBlockX();
+                int y = loc.getBlockY();
+                int z = loc.getBlockZ();
+                gravesMSG[0] += "§6" + index[0] + ": §b§lWelt§b: " + loc.getWorld().getName() + ", §4§lKoordinaten§4: " + x + ", " + y + ", " + z + "§6\n";
+                index[0]++;
+            });
+
+            if(!gravesMSG[0].contains(",")) {
+                gravesMSG[0] = "§aDu hast glücklicherweise noch kein Grab!";
+            }
+
+        } else if ((args.length > 0 && args[0].equalsIgnoreCase("all")) || sender instanceof ConsoleCommandSender) {
+            if(sender.hasPermission("gravestones.listAllGraves")) {
+                gravesMSG[0] = "§6Gräber:\n";
+
+                final int[] index = {1};
+
+                Grave.gravestones.forEach(grave -> {
+                    Location loc = grave.getGraveBlock().getLocation();
+                    int x = loc.getBlockX();
+                    int y = loc.getBlockY();
+                    int z = loc.getBlockZ();
+                    gravesMSG[0] += "§6" + index[0] + ": §c§l" + grave.getPlayer().getName() + "§c: §b§lWelt: §b" + loc.getWorld().getName() + ", §4§lKoordinaten§4: " + x + ", " + y + ", " + z + "§6\n";
+                    index[0]++;
+                });
+
+                if(!gravesMSG[0].contains(",")) {
+                    gravesMSG[0] = "§aEs gibt glücklicherweise noch kein Grab!";
+                }
+            } else {
+                GravestoneHandler.sendMSG(sender, GravestoneHandler.MSG.NO_PERM);
+            }
+        }
+
+        sender.sendMessage(gravesMSG[0]);
+
+
+        return true;
+    }
+
+    /**
      * Sends a message to a Player
      * @param player The message will be send to this Player
      * @param type The message type
      */
-    static void sendMSG(Player player, MSG type, @Nullable String... coords) {
-        if(player != null && player.isOnline()) {
+    static void sendMSG(CommandSender player, MSG type, @Nullable String... coords) {
+        if(player != null) {
             if(type.equals(MSG.GRAVE_INFO) && coords != null) {
                 player.sendMessage(type.toString().replaceAll("%COORDS%", coords[0]));
                 return;
@@ -183,7 +246,8 @@ public class GravestoneHandler implements Listener {
         NOT_BELONG("§cDieses Grab gehört nicht dir!"),
         GRAVE_DESTROYED("§cDein Grab wurde zerstört."),
         GRAVE_INFO("§4Du bist bei §l%COORDS% §4gestorben! §6Geh zum Grab und hol deine Items!"),
-        NO_ITEMS("§6Du hattest keine Items bei dir. Deswegen wurde kein Grab erstellt.");
+        NO_ITEMS("§6Du hattest keine Items bei dir. Deswegen wurde kein Grab erbaut."),
+        NO_PERM("§cNanana!! Das darfst du nicht!!!");
 
         private String msg;
 

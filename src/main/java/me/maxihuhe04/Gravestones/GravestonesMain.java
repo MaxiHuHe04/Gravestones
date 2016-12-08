@@ -4,12 +4,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 
-//TODO: /graves (for OP: /graves all)
-
 public final class GravestonesMain extends JavaPlugin {
 
     private static GravestonesMain instance;
-
 
     static GravestonesMain getInstance() {
         return instance;
@@ -20,7 +17,10 @@ public final class GravestonesMain extends JavaPlugin {
 
         instance = this;
 
-        this.getServer().getPluginManager().registerEvents(new GravestoneHandler(), this);
+        GravestoneHandler handler = new GravestoneHandler();
+
+        this.getServer().getPluginManager().registerEvents(handler, this);
+        this.getCommand("graves").setExecutor(handler);
 
     }
 
